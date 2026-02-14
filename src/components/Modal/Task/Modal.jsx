@@ -14,33 +14,24 @@ const Modal = ({ onClose }) => {
     const group = useGroup((state) => state.group)
     const client = useClient((state) => state.client)
 
-
-    const [tasks, setTasks] = useState([
+    // Просто объявляем переменную. Она будет заново создаваться с актуальными 
+    // данными при каждом изменении client или group в Zustand.
+    const tasks = [
         {
             id: 0,
             title: "Вступить в наше сообщество",
-            is_complete: client?.branches?.isJoinedCommunity,
+            // Убедитесь, что используете правильный путь. Если флаг лежит 
+            // прямо в client, оставьте client?.isJoinedCommunity
+            is_complete: client?.isJoinedCommunity || client?.branches?.isJoinedCommunity,
             onClick: () => joinCommunity({ group_id: parseInt(group?.group_id) }),
         },
         {
             id: 1,
             title: "Разрешить отправку сообщений",
-            is_complete: client?.branches?.isAllowedMessageFromCommunity,
+            is_complete: client?.isAllowedMessageFromCommunity || client?.branches?.isAllowedMessageFromCommunity,
             onClick: () => allowMessageFromCommunity({ group_id: parseInt(group?.group_id) }),
         }
-    ])
-
-    useEffect(() => {
-        if (client?.isJoinedCommunity) {
-            setTasks((prev) => prev.map((task) => task.id === 0 ? { ...task, is_complete: true } : task))
-        }
-    }, [client?.isJoinedCommunity])
-
-    useEffect(() => {
-        if (client?.isAllowedMessageFromCommunity) {
-            setTasks((prev) => prev.map((task) => task.id === 1 ? { ...task, is_complete: true } : task))
-        }
-    }, [client?.isAllowedMessageFromCommunity])
+    ]
 
     useEffect(() => {
         if (shake) {
@@ -61,7 +52,6 @@ const Modal = ({ onClose }) => {
 
     return createPortal(
         <div className={styles.overlay}>
-
             <div className={styles.logoContainer}>
                 <img src='/LevelUpLogo.png' alt="Logo" />
             </div>
@@ -78,7 +68,6 @@ const Modal = ({ onClose }) => {
                         onClick={!task.is_complete ? task.onClick : undefined}
                     >
                         <div className={`${styles.checkbox} ${task.is_complete ? styles.checked : ''}`} />
-
                         <span className={styles.taskLabel}>{task.title}</span>
                     </div>
                 ))}
@@ -91,7 +80,7 @@ const Modal = ({ onClose }) => {
                 РАЗРЕШИТЬ
             </button>
         </div>,
-        document.body // Узел DOM, куда рендерим
+        document.body
     )
 }
 
