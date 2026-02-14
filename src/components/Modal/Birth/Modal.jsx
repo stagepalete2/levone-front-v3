@@ -173,7 +173,7 @@
 
 import dayjs from "dayjs"
 import 'dayjs/locale/ru'
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import useUpdateClientHandler from '../../../api/handlers/client/useUpdateClient.handler'

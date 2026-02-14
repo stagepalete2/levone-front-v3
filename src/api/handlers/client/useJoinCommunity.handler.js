@@ -7,6 +7,8 @@ export const useJoinCommunity = () => {
 	const setIsJoinedCommunity = useClient((state) => state.setIsJoinedCommunity)
 	const branch = useParams((state) => state.branch)
 
+	console.log(client)
+
 	const joinCommunity = async ({ group_id }) => {
 		try {
 			if (client) {
