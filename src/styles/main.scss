@@ -1,0 +1,28 @@
+@use './variables' as *;
+@use "./fonts" as *;
+
+* {
+    font-family: "My Fucking Font", sans-serif; /* Всегда добавляй запасной шрифт */
+    box-sizing: border-box;
+	font-weight: bold;
+}
+
+html, body {
+	overscroll-behavior: none;
+}
+
+body {
+	margin: 0px;
+	background-color: #2C2C34;
+	font-weight: 400;
+}
+
+p {
+	margin: 0;
+	padding: 0;
+}
+
+
+a {
+	text-decoration: none;
+}
