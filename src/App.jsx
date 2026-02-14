@@ -35,7 +35,7 @@ function App() {
       try {
         const data = await vkBridge.send('VKWebAppInit')
         // const isVk = typeof window !== 'undefined' && window.location?.origin?.includes('vk-apps.com')
-        const isVk = typeof window !== 'undefined' && (window.location?.origin?.includes('tunnel.levoneapp.ru') || window.location?.origin?.includes('vk-apps.com'))
+        const isVk = typeof window !== 'undefined' && (window.location?.origin?.includes('levonework.ru') || window.location?.origin?.includes('vk-apps.com'))
 
         if (!isVk) {
           setIsVk(Boolean(isVk))
