@@ -96,12 +96,11 @@
 // 		}
 // 	}
 // }
-
 @use '../../../styles/variables' as *;
 
 // Константы для барабана
 $item-height: 40px;
-$visible-items: 5; // Сколько элементов видно (должно быть нечетным)
+$visible-items: 5;
 $picker-height: $item-height * $visible-items;
 
 .overlay {
@@ -132,6 +131,9 @@ $picker-height: $item-height * $visible-items;
 			.logotype {
 				width: 100px;
 				height: auto;
+				display: block;
+				margin: 0 auto;
+				object-fit: contain;
 			}
 		}
 
@@ -160,11 +162,21 @@ $picker-height: $item-height * $visible-items;
 				display: flex;
 				justify-content: center;
 				overflow: hidden;
-				mask-image: linear-gradient(to bottom,
-						transparent 0%,
-						black 20%,
-						black 80%,
-						transparent 100%); // Эффект затухания сверху и снизу
+				// Эффект затухания сверху и снизу
+				mask-image: linear-gradient(
+					to bottom,
+					transparent 0%,
+					black 20%,
+					black 80%,
+					transparent 100%
+				);
+				-webkit-mask-image: linear-gradient(
+					to bottom,
+					transparent 0%,
+					black 20%,
+					black 80%,
+					transparent 100%
+				);
 
 				.highlightBar {
 					position: absolute;
@@ -177,7 +189,7 @@ $picker-height: $item-height * $visible-items;
 					border-top: 1px solid rgba(255, 255, 255, 0.2);
 					border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 					pointer-events: none;
-					z-index: 0;
+					z-index: 2;
 				}
 
 				.wheelColumn {
@@ -185,53 +197,56 @@ $picker-height: $item-height * $visible-items;
 					height: 100%;
 					position: relative;
 					z-index: 1;
+					overflow: hidden; // блокируем горизонтальный сдвиг на уровне колонки
 
-					// Расширяем колонку с месяцем, так как названия длинные
+					// Расширяем колонку с месяцем
 					&:nth-child(3) {
 						flex: 1.5;
 					}
 
 					.scrollContainer {
 						height: 100%;
+						overflow-x: hidden;       // ← блокируем горизонтальный скролл
 						overflow-y: scroll;
 						scroll-snap-type: y mandatory;
-						scrollbar-width: none; // Firefox
+						overscroll-behavior: contain; // ← не даём скроллу «утекать» наружу
+						touch-action: pan-y;         // ← только вертикальный свайп
+						-webkit-overflow-scrolling: touch; // плавный скролл на iOS
+						scrollbar-width: none;
 
 						&::-webkit-scrollbar {
 							display: none;
 						}
-
-						// Chrome/Safari
 
 						.wheelItem {
 							height: $item-height;
 							display: flex;
 							align-items: center;
 							justify-content: center;
-							scroll-snap-align: center;
-							color: rgba(255, 255, 255, 0.5);
-							font-size: 1rem;
+							scroll-snap-align: start;
+							color: rgba(255, 255, 255, 0.4);
+							font-size: 0.95rem;
 							font-weight: 500;
-							transition: all 0.2s ease;
+							transition: color 0.2s ease, font-weight 0.2s ease;
 							cursor: pointer;
+							user-select: none;         // ← запрет выделения текста
+							-webkit-user-select: none;
+							white-space: nowrap;
 
 							&.selected {
 								color: #fff;
-								font-size: 1.1rem;
+								font-size: 1.05rem;
 								font-weight: 700;
-								transform: scale(1.1);
 							}
 						}
 
-						// Пустые блоки сверху и снизу, чтобы первый и последний элемент могли встать по центру
+						// Пустые блоки сверху и снизу для центровки первого/последнего элемента
 						.paddingItem {
 							height: calc(($picker-height - $item-height) / 2);
 						}
 					}
 				}
 			}
-
-			// -------------------------
 
 			.warning {
 				color: $main-dark;
