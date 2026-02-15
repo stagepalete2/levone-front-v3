@@ -22,13 +22,13 @@ const Modal = ({ onClose }) => {
             title: "Вступить в наше сообщество",
             // Убедитесь, что используете правильный путь. Если флаг лежит 
             // прямо в client, оставьте client?.isJoinedCommunity
-            is_complete: client?.isJoinedCommunity || client?.branches?.isJoinedCommunity,
+            is_complete: client?.is_joined_community || client?.branches?.is_joined_community,
             onClick: () => joinCommunity({ group_id: parseInt(group?.group_id) }),
         },
         {
             id: 1,
             title: "Разрешить отправку сообщений",
-            is_complete: client?.isAllowedMessageFromCommunity || client?.branches?.isAllowedMessageFromCommunity,
+            is_complete: client?.is_allowed_message || client?.branches?.is_allowed_message,
             onClick: () => allowMessageFromCommunity({ group_id: parseInt(group?.group_id) }),
         }
     ]
