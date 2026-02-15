@@ -354,7 +354,7 @@ export const useHasShownPostStory = create((set) => ({
 }));
 
 export const useLogo = create((set) => ({
-  logotype: '/LevLogo.png',
+  logotype: '/LevelUpLogo.png',
   coin: '/LevCoin.png',
   card: '/images/bred.jpg',
 
