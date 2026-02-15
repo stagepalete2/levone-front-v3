@@ -306,7 +306,7 @@ const Modal = ({ onClose }) => {
 
 				<div className={styles.header}>
 					<img
-						src={logotype !== null ? `${import.meta.env.VITE_BACKEND_DOMAIN}${logotype}` : '/LevelUpLogo.png'}
+						src='/LevelUpLogo.png'
 						alt="Logotype"
 						className={styles.logotype}
 					/>
