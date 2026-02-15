@@ -170,58 +170,89 @@
 
 // export default Modal
 
-
 import dayjs from "dayjs"
 import 'dayjs/locale/ru'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import useUpdateClientHandler from '../../../api/handlers/client/useUpdateClient.handler'
 import { useClient, useLogo, useParams } from '../../../zustand'
 import styles from './Modal.module.scss'
 
-// Месяцы в родительном падеже для красивого отображения (1 Сентября 1990)
+// Месяцы в родительном падеже
 const MONTHS = [
 	'Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня',
 	'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'
 ];
 
-const ITEM_HEIGHT = 40; // Высота одного элемента в барабане
+const ITEM_HEIGHT = 40;
 
-// Вспомогательный компонент одной колонки (День, Месяц или Год)
+// Компонент одной колонки барабана
 const WheelColumn = ({ items, value, onChange, label }) => {
 	const rootRef = useRef(null);
 	const isScrolling = useRef(false);
+	const timeoutRef = useRef(null); // свой таймаут для каждой колонки (не window!)
 
-	// Синхронизация скролла при изменении value извне (или при инициализации)
+	// Синхронизация скролла при изменении value извне
 	useEffect(() => {
 		if (rootRef.current && !isScrolling.current) {
 			const index = items.indexOf(value);
 			if (index !== -1) {
-				rootRef.current.scrollTop = index * ITEM_HEIGHT;
+				rootRef.current.scrollTo({
+					top: index * ITEM_HEIGHT,
+					behavior: 'auto'
+				});
 			}
 		}
 	}, [value, items]);
 
-	const handleScroll = (e) => {
+	const handleScroll = useCallback(() => {
 		isScrolling.current = true;
-		clearTimeout(window.scrollTimeout);
 
-		// Debounce для завершения скролла
-		window.scrollTimeout = setTimeout(() => {
+		if (timeoutRef.current) {
+			clearTimeout(timeoutRef.current);
+		}
+
+		timeoutRef.current = setTimeout(() => {
 			if (!rootRef.current) return;
+
 			const scrollTop = rootRef.current.scrollTop;
 			const index = Math.round(scrollTop / ITEM_HEIGHT);
-
-			// Защита от выхода за границы
 			const safeIndex = Math.max(0, Math.min(index, items.length - 1));
+
+			// Прилипание к ближайшему элементу
+			rootRef.current.scrollTo({
+				top: safeIndex * ITEM_HEIGHT,
+				behavior: 'smooth'
+			});
 
 			if (items[safeIndex] !== value) {
 				onChange(items[safeIndex]);
 			}
+
 			isScrolling.current = false;
-		}, 100);
-	};
+		}, 80);
+	}, [items, value, onChange]);
+
+	// Очистка таймаута при размонтировании
+	useEffect(() => {
+		return () => {
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+			}
+		};
+	}, []);
+
+	// Клик по элементу — прокрутка к нему
+	const handleItemClick = useCallback((item, index) => {
+		if (rootRef.current) {
+			rootRef.current.scrollTo({
+				top: index * ITEM_HEIGHT,
+				behavior: 'smooth'
+			});
+		}
+		onChange(item);
+	}, [onChange]);
 
 	return (
 		<div className={styles.wheelColumn}>
@@ -235,6 +266,7 @@ const WheelColumn = ({ items, value, onChange, label }) => {
 					<div
 						key={`${label}-${item}`}
 						className={`${styles.wheelItem} ${item === value ? styles.selected : ''}`}
+						onClick={() => handleItemClick(item, index)}
 					>
 						{item}
 					</div>
@@ -251,15 +283,12 @@ const Modal = ({ onClose }) => {
 	const { updateClient } = useUpdateClientHandler()
 	const logotype = useLogo((state) => state.logotype)
 
-	// Инициализируем текущей датой
 	const [selectedDate, setSelectedDate] = useState(dayjs());
 
-	// Разбиваем на компоненты для удобства работы с барабанами
 	const [day, setDay] = useState(selectedDate.date());
 	const [monthIndex, setMonthIndex] = useState(selectedDate.month());
 	const [year, setYear] = useState(selectedDate.year());
 
-	// Генерация массивов данных
 	const years = useMemo(() => {
 		const currentYear = dayjs().year();
 		const startYear = 1950;
@@ -271,9 +300,7 @@ const Modal = ({ onClose }) => {
 		return Array.from({ length: daysInMonth }, (_, i) => i + 1);
 	}, [year, monthIndex]);
 
-	// Обновляем общий стейт даты при изменении любого барабана
 	useEffect(() => {
-		// Проверка: если был выбран 31 день, а переключили на Февраль, нужно скорректировать день
 		const maxDays = dayjs(`${year}-${monthIndex + 1}-01`).daysInMonth();
 		let safeDay = day;
 		if (day > maxDays) {
@@ -299,16 +326,23 @@ const Modal = ({ onClose }) => {
 		}
 	}
 
+	// Безопасная проверка логотипа (ловит null, undefined, пустую строку)
+	const logoSrc = logotype
+		? `${import.meta.env.VITE_BACKEND_DOMAIN}${logotype}`
+		: '/LevelUpLogo.png';
+
 	return createPortal(
 		<div className={styles.overlay}>
 			<div className={styles.modal}>
-				{/* Кнопка закрытия (крестик) можно добавить при желании */}
-
 				<div className={styles.header}>
 					<img
-						src='/LevelUpLogo.png'
+						src={logoSrc}
 						alt="Logotype"
 						className={styles.logotype}
+						onError={(e) => {
+							e.target.onerror = null;
+							e.target.src = '/LevelUpLogo.png';
+						}}
 					/>
 				</div>
 
@@ -317,10 +351,8 @@ const Modal = ({ onClose }) => {
 					<p className={styles.subtitle}>Укажите дату, чтобы получить подарок!</p>
 
 					<div className={styles.pickerWrapper}>
-						{/* Линия выделения (Highlighter) */}
 						<div className={styles.highlightBar}></div>
 
-						{/* Барабан Дней */}
 						<WheelColumn
 							items={days}
 							value={day}
@@ -328,7 +360,6 @@ const Modal = ({ onClose }) => {
 							label="day"
 						/>
 
-						{/* Барабан Месяцев */}
 						<WheelColumn
 							items={MONTHS}
 							value={MONTHS[monthIndex]}
@@ -336,7 +367,6 @@ const Modal = ({ onClose }) => {
 							label="month"
 						/>
 
-						{/* Барабан Лет */}
 						<WheelColumn
 							items={years}
 							value={year}
