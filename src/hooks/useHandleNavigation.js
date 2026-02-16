@@ -1,5 +1,5 @@
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router"
-import { useParams } from '../zustand' // Проверь путь к стору
+import { useParams } from '../zustand'; // Проверь путь к стору
 
 export function useNavigation() {
   const routeNavigator = useRouteNavigator()
@@ -13,8 +13,7 @@ export function useNavigation() {
   /**
    * @param {string} newPath - Путь для перехода (например, '/')
    * @param {object} paramsOverride - Объект для перезаписи параметров. 
-   * Передай null, чтобы удалить параметр из URL. 
-   * Пример: { delivery: null }
+   * Передай null или '', чтобы удалить параметр из URL. 
    */
   const handleNavigation = (newPath, paramsOverride = {}) => {
     if (!newPath) return
@@ -30,9 +29,10 @@ export function useNavigation() {
     // 2. Объединяем с новыми (перезаписываем)
     const finalParams = { ...currentParams, ...paramsOverride }
 
-    // 3. Очищаем ключи, которые равны null или undefined, чтобы они не попали в URL
+    // 3. Очищаем ключи, которые не имеют реального значения
     Object.keys(finalParams).forEach(key => {
-      if (finalParams[key] === null || finalParams[key] === undefined) {
+      // Если значение null, undefined или пустая строка — удаляем
+      if (finalParams[key] === null || finalParams[key] === undefined || finalParams[key] === '') {
         delete finalParams[key]
       }
     })
