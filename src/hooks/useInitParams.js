@@ -27,9 +27,12 @@ const useInitParams = () => {
 	}, [params])
 
 	const delivery = useMemo(() => {
-		const value = params.get('delivery')
-		return value && value !== 'null' ? value : undefined
-	}, [params])
+        const value = params.get('delivery')
+        if (!value || value === 'null') return undefined
+        
+        // Явно проверяем строку на равенство 'true'
+        return value === 'true' 
+    }, [params])
 
 	const from = useMemo(() => {
 		const value = params.get('from')
