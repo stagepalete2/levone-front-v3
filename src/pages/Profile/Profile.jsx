@@ -99,7 +99,7 @@ const Profile = () => {
 
                                     {/* Правая желтая часть */}
                                     <div className={styles.cardRight}>
-                                        <div className={styles.discountTitle}>{promo.discount} % скидка</div>
+                                        <div className={styles.discountTitle}>{promo.discount}</div>
                                         <div className={styles.dates}>{promo.dates}</div>
                                         <div className={styles.subText}>{promo.title}</div>
                                     </div>
