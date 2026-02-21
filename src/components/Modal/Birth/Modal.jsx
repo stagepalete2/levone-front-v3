@@ -190,69 +190,59 @@ const ITEM_HEIGHT = 40;
 // Компонент одной колонки барабана
 const WheelColumn = ({ items, value, onChange, label }) => {
 	const rootRef = useRef(null);
-	const isScrolling = useRef(false);
-	const timeoutRef = useRef(null); // свой таймаут для каждой колонки (не window!)
+	// ✅ Флаг: МЫ сами программно скроллим — игнорируем эти onScroll события
+	const isProgrammatic = useRef(false);
+	const snapTimerRef = useRef(null);
 
-	// Синхронизация скролла при изменении value извне
+	// Прокрутка к индексу без рекурсии
+	const scrollToIndex = useCallback((index, behavior = 'auto') => {
+		const el = rootRef.current;
+		if (!el) return;
+		isProgrammatic.current = true;
+		el.scrollTo({ top: index * ITEM_HEIGHT, behavior });
+		// Сбрасываем флаг после того, как скролл гарантированно завершится
+		const delay = behavior === 'smooth' ? 400 : 50;
+		setTimeout(() => { isProgrammatic.current = false; }, delay);
+	}, []);
+
+	// Синхронизация скролла при изменении value извне (смена month→days пересчитал список)
 	useEffect(() => {
-		if (rootRef.current && !isScrolling.current) {
-			const index = items.indexOf(value);
-			if (index !== -1) {
-				rootRef.current.scrollTo({
-					top: index * ITEM_HEIGHT,
-					behavior: 'auto'
-				});
-			}
-		}
-	}, [value, items]);
+		const index = items.indexOf(value);
+		if (index !== -1) scrollToIndex(index, 'auto');
+	}, [value, items]); // scrollToIndex стабилен, не нужен в deps
 
 	const handleScroll = useCallback(() => {
-		isScrolling.current = true;
+		// ✅ Игнорируем события от нашего собственного scrollTo
+		if (isProgrammatic.current) return;
 
-		if (timeoutRef.current) {
-			clearTimeout(timeoutRef.current);
-		}
+		if (snapTimerRef.current) clearTimeout(snapTimerRef.current);
 
-		timeoutRef.current = setTimeout(() => {
-			if (!rootRef.current) return;
+		snapTimerRef.current = setTimeout(() => {
+			const el = rootRef.current;
+			if (!el) return;
 
-			const scrollTop = rootRef.current.scrollTop;
-			const index = Math.round(scrollTop / ITEM_HEIGHT);
+			const index = Math.round(el.scrollTop / ITEM_HEIGHT);
 			const safeIndex = Math.max(0, Math.min(index, items.length - 1));
 
-			// Прилипание к ближайшему элементу
-			rootRef.current.scrollTo({
-				top: safeIndex * ITEM_HEIGHT,
-				behavior: 'smooth'
-			});
+			// Прилипаем — это программный скролл, onScroll будет проигнорирован
+			scrollToIndex(safeIndex, 'smooth');
 
 			if (items[safeIndex] !== value) {
 				onChange(items[safeIndex]);
 			}
-
-			isScrolling.current = false;
 		}, 80);
-	}, [items, value, onChange]);
+	}, [items, value, onChange, scrollToIndex]);
 
-	// Очистка таймаута при размонтировании
+	// Очистка при размонтировании
 	useEffect(() => {
-		return () => {
-			if (timeoutRef.current) {
-				clearTimeout(timeoutRef.current);
-			}
-		};
+		return () => { if (snapTimerRef.current) clearTimeout(snapTimerRef.current); };
 	}, []);
 
 	// Клик по элементу — прокрутка к нему
 	const handleItemClick = useCallback((item, index) => {
-		if (rootRef.current) {
-			rootRef.current.scrollTo({
-				top: index * ITEM_HEIGHT,
-				behavior: 'smooth'
-			});
-		}
+		scrollToIndex(index, 'smooth');
 		onChange(item);
-	}, [onChange]);
+	}, [onChange, scrollToIndex]);
 
 	return (
 		<div className={styles.wheelColumn}>

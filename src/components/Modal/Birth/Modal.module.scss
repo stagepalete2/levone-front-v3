@@ -107,13 +107,21 @@ $picker-height: $item-height * $visible-items;
 	position: fixed;
 	inset: 0;
 	background-color: rgba(0, 0, 0, 0.75);
+	// ✅ Оверлей скроллится сам — кнопка всегда достижима даже на iPhone SE
+	overflow-y: auto;
 	display: flex;
-	align-items: center;
+	// ✅ flex-start вместо center — контент не обрезается снизу
+	align-items: flex-start;
 	justify-content: center;
+	// Внутренние отступы чтобы модал не прилипал к краям
+	padding: max(20px, env(safe-area-inset-top)) 0 max(20px, env(safe-area-inset-bottom));
+	box-sizing: border-box;
 	z-index: 9999;
 	backdrop-filter: blur(4px);
 
 	.modal {
+		// margin: auto центрирует по вертикали когда контент меньше экрана
+		margin: auto;
 		position: relative;
 		width: 90%;
 		max-width: 340px;
