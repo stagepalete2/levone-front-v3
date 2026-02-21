@@ -278,115 +278,126 @@ const WheelColumn = ({ items, value, onChange, label }) => {
 };
 
 const Modal = ({ onClose }) => {
-	const client = useClient((state) => state.client)
-	const branch = useParams((state) => state.branch)
-	const { updateClient } = useUpdateClientHandler()
-	const logotype = useLogo((state) => state.logotype)
+    const client = useClient((state) => state.client)
+    const branch = useParams((state) => state.branch)
+    const { updateClient } = useUpdateClientHandler()
+    const logotype = useLogo((state) => state.logotype)
 
-	const [selectedDate, setSelectedDate] = useState(dayjs());
+    const [selectedDate, setSelectedDate] = useState(dayjs());
 
-	const [day, setDay] = useState(selectedDate.date());
-	const [monthIndex, setMonthIndex] = useState(selectedDate.month());
-	const [year, setYear] = useState(selectedDate.year());
+    const [day, setDay] = useState(selectedDate.date());
+    const [monthIndex, setMonthIndex] = useState(selectedDate.month());
+    const [year, setYear] = useState(selectedDate.year());
 
-	const years = useMemo(() => {
-		const currentYear = dayjs().year();
-		const startYear = 1950;
-		return Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i).reverse();
-	}, []);
+    const years = useMemo(() => {
+        const currentYear = dayjs().year();
+        const startYear = 1950;
+        return Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i).reverse();
+    }, []);
 
-	const days = useMemo(() => {
-		const daysInMonth = dayjs(`${year}-${monthIndex + 1}-01`).daysInMonth();
-		return Array.from({ length: daysInMonth }, (_, i) => i + 1);
-	}, [year, monthIndex]);
+    const days = useMemo(() => {
+        // ИСХОДНИК ОШИБКИ 1: Перешли на безопасный new Date() вместо строк
+        const daysInMonth = dayjs(new Date(year, monthIndex, 1)).daysInMonth();
+        return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    }, [year, monthIndex]);
 
-	useEffect(() => {
-		const maxDays = dayjs(`${year}-${monthIndex + 1}-01`).daysInMonth();
-		let safeDay = day;
-		if (day > maxDays) {
-			safeDay = maxDays;
-			setDay(safeDay);
-		}
+    useEffect(() => {
+        // Снова используем безопасный new Date()
+        const maxDays = dayjs(new Date(year, monthIndex, 1)).daysInMonth();
+        let safeDay = day;
+        if (day > maxDays) {
+            safeDay = maxDays;
+            setDay(safeDay);
+        }
 
-		const newDate = dayjs().year(year).month(monthIndex).date(safeDay);
-		setSelectedDate(newDate);
-	}, [day, monthIndex, year]);
+        // ИСХОДНИК ОШИБКИ 2: Создаем дату с нуля, чтобы избежать перескока месяцев (бага 31-го числа)
+        const newDate = dayjs(new Date(year, monthIndex, safeDay));
+        setSelectedDate(newDate);
+    }, [day, monthIndex, year]);
 
-	const handleSubmit = async () => {
-		if (!selectedDate) return
-		try {
-			await updateClient({
-				vk_user_id: client.vk_user_id,
-				branch: branch,
-				birth_date: selectedDate.format("YYYY-MM-DD")
-			})
-			if (onClose) onClose();
-		} catch (error) {
-			console.log(error)
-		}
-	}
+    const handleSubmit = async (e) => {
+        e.preventDefault(); // ИСХОДНИК ОШИБКИ 3: Предотвращаем случайный сабмит родительских форм
+        
+        // Защита от отправки пустых данных
+        if (!selectedDate || !client?.vk_user_id) {
+            console.error("Клиент не загружен или дата не выбрана");
+            return;
+        }
 
-	// Безопасная проверка логотипа (ловит null, undefined, пустую строку)
-	const logoSrc = logotype
-		? `${import.meta.env.VITE_BACKEND_DOMAIN}${logotype}`
-		: '/LevelUpLogo.png';
+        try {
+            await updateClient({
+                vk_user_id: client.vk_user_id,
+                branch: branch,
+                birth_date: selectedDate.format("YYYY-MM-DD")
+            })
+            if (onClose) onClose();
+        } catch (error) {
+            // Теперь ошибка будет явно видна (лучше вывести её пользователю через Toast/Alert)
+            console.error("Ошибка при сохранении дня рождения:", error);
+        }
+    }
 
-	return createPortal(
-		<div className={styles.overlay}>
-			<div className={styles.modal}>
-				<div className={styles.header}>
-					<img
-						src={logoSrc}
-						alt="Logotype"
-						className={styles.logotype}
-						onError={(e) => {
-							e.target.onerror = null;
-							e.target.src = '/LevelUpLogo.png';
-						}}
-					/>
-				</div>
+    const logoSrc = logotype
+        ? `${import.meta.env.VITE_BACKEND_DOMAIN}${logotype}`
+        : '/LevelUpLogo.png';
 
-				<div className={styles.body}>
-					<h3 className={styles.title}>ДЕНЬ РОЖДЕНИЯ 🎂</h3>
-					<p className={styles.subtitle}>Укажите дату, чтобы получить подарок!</p>
+    return createPortal(
+        <div className={styles.overlay}>
+            <div className={styles.modal}>
+                <div className={styles.header}>
+                    <img
+                        src={logoSrc}
+                        alt="Logotype"
+                        className={styles.logotype}
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/LevelUpLogo.png';
+                        }}
+                    />
+                </div>
 
-					<div className={styles.pickerWrapper}>
-						<div className={styles.highlightBar}></div>
+                <div className={styles.body}>
+                    <h3 className={styles.title}>ДЕНЬ РОЖДЕНИЯ 🎂</h3>
+                    <p className={styles.subtitle}>Укажите дату, чтобы получить подарок!</p>
 
-						<WheelColumn
-							items={days}
-							value={day}
-							onChange={setDay}
-							label="day"
-						/>
+                    <div className={styles.pickerWrapper}>
+                        <div className={styles.highlightBar}></div>
 
-						<WheelColumn
-							items={MONTHS}
-							value={MONTHS[monthIndex]}
-							onChange={(val) => setMonthIndex(MONTHS.indexOf(val))}
-							label="month"
-						/>
+                        <WheelColumn
+                            items={days}
+                            value={day}
+                            onChange={setDay}
+                            label="day"
+                        />
 
-						<WheelColumn
-							items={years}
-							value={year}
-							onChange={setYear}
-							label="year"
-						/>
-					</div>
+                        <WheelColumn
+                            items={MONTHS}
+                            value={MONTHS[monthIndex]}
+                            onChange={(val) => setMonthIndex(MONTHS.indexOf(val))}
+                            label="month"
+                        />
 
-					<p className={styles.warning}>
-						Изменить дату позже будет невозможно
-					</p>
+                        <WheelColumn
+                            items={years}
+                            value={year}
+                            onChange={setYear}
+                            label="year"
+                        />
+                    </div>
 
-					<button className={styles.submitButton} onClick={handleSubmit}>
-						ПОДТВЕРДИТЬ
-					</button>
-				</div>
-			</div>
-		</div>,
-		document.body
-	)
+                    <p className={styles.warning}>
+                        Изменить дату позже будет невозможно
+                    </p>
+
+                    {/* Добавлен onClick с объектом события e */}
+                    <button className={styles.submitButton} onClick={handleSubmit}>
+                        ПОДТВЕРДИТЬ
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    )
 }
 
 export default Modal
