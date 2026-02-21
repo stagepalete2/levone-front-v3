@@ -197,7 +197,7 @@ $picker-height: $item-height * $visible-items;
 					height: 100%;
 					position: relative;
 					z-index: 1;
-					overflow: hidden; // блокируем горизонтальный сдвиг на уровне колонки
+					overflow: hidden;
 
 					// Расширяем колонку с месяцем
 					&:nth-child(3) {
@@ -206,12 +206,13 @@ $picker-height: $item-height * $visible-items;
 
 					.scrollContainer {
 						height: 100%;
-						overflow-x: hidden;       // ← блокируем горизонтальный скролл
+						overflow-x: hidden;
 						overflow-y: scroll;
-						scroll-snap-type: y mandatory;
-						overscroll-behavior: contain; // ← не даём скроллу «утекать» наружу
-						touch-action: pan-y;         // ← только вертикальный свайп
-						-webkit-overflow-scrolling: touch; // плавный скролл на iOS
+						// ❌ УБРАНО: scroll-snap-type: y mandatory; — конфликтовало с JS снаппингом
+						// и делало первые/последние элементы недоступными
+						overscroll-behavior: contain;
+						touch-action: pan-y;
+						-webkit-overflow-scrolling: touch;
 						scrollbar-width: none;
 
 						&::-webkit-scrollbar {
@@ -223,13 +224,13 @@ $picker-height: $item-height * $visible-items;
 							display: flex;
 							align-items: center;
 							justify-content: center;
-							scroll-snap-align: start;
+							// ❌ УБРАНО: scroll-snap-align: start; — не нужно без scroll-snap-type
 							color: rgba(255, 255, 255, 0.4);
 							font-size: 0.95rem;
 							font-weight: 500;
 							transition: color 0.2s ease, font-weight 0.2s ease;
 							cursor: pointer;
-							user-select: none;         // ← запрет выделения текста
+							user-select: none;
 							-webkit-user-select: none;
 							white-space: nowrap;
 
@@ -243,6 +244,7 @@ $picker-height: $item-height * $visible-items;
 						// Пустые блоки сверху и снизу для центровки первого/последнего элемента
 						.paddingItem {
 							height: calc(($picker-height - $item-height) / 2);
+							flex-shrink: 0;
 						}
 					}
 				}

@@ -7,19 +7,20 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: $main-bg; // Был $bg-dark
+    background-color: $main-bg;
     overflow: hidden;
-    position: relative; // База для абсолюта
+    position: relative;
 
     // ---------------------------
 
     .header {
-        z-index: 0; // Поднимаем над фоном
+        z-index: 0;
 
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: center;
+        gap: 10px;          // ← отступ между логотипом и названием
         flex-shrink: 0;
         width: 100%;
         padding: 10px 16px;
@@ -30,6 +31,27 @@
             height: 32px;
             object-fit: contain;
         }
+
+        // Название филиала рядом с логотипом
+        .branchName {
+            font-size: 13px;
+            font-weight: 700;
+            color: $main-dark;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px;
+
+            // Разделитель между логотипом и названием
+            &::before {
+                content: '|';
+                margin-right: 10px;
+                opacity: 0.3;
+                font-weight: 300;
+            }
+        }
     }
 
     .content {
@@ -39,11 +61,10 @@
         width: 100% !important;
         max-width: 500px;
 
-        // ВАЖНО: Меняем цвет фона на прозрачный
         background-color: transparent;
 
         position: relative;
-        z-index: 1; // Контент лежит поверх фона
+        z-index: 1;
 
         scrollbar-width: none;
 
@@ -63,12 +84,11 @@
         flex-shrink: 0;
         background-color: $secondary-bg;
         position: relative;
-        z-index: 100; // Навигация должна быть выше всего
+        z-index: 100;
         padding-bottom: $bottomSafeArea;
         box-sizing: content-box;
 
         .nav_link {
-            // ... стили ...
             background: none;
             border: none;
             flex: 1;
@@ -124,15 +144,12 @@
                 max-width: 120px;
                 height: calc(85px + #{$bottomSafeArea});
 
-                // ИЗМЕНЕНИЕ 1: Убираем цвет фона, он теперь в Lottie
-                background-color: transparent; // Был $main-lime
-                // border-radius: 50px 50px 0 0; // Можно убрать, если форма есть в анимации
+                background-color: transparent;
 
                 color: #222;
                 padding-bottom: calc(5px + #{$bottomSafeArea});
 
-                // Тень можно оставить или убрать, зависит от дизайна анимации
-                box-shadow: none; // Убрал тень CSS, если она есть в Lottie, иначе верните
+                box-shadow: none;
 
                 z-index: 10;
                 display: flex;
@@ -143,27 +160,24 @@
                 border: none;
                 cursor: pointer;
                 -webkit-tap-highlight-color: transparent;
-                overflow: hidden; // Чтобы анимация не вылезала за пределы кликабельной зоны (опционально)
+                overflow: hidden;
 
-                // ИЗМЕНЕНИЕ 2: Контейнер для фоновой анимации
                 .lottie_background {
                     position: absolute;
                     top: 10px;
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    z-index: -1; // Кладем ПОД контент (текст и иконку)
+                    z-index: -1;
 
-                    // Центрируем Lottie внутри кнопки
                     display: flex;
                     align-items: center;
                     justify-content: center;
 
                     .lottie_player {
-                        // Подгоняем размер. Возможно придется поправить scale в зависимости от JSON
-                        width: 140%; // Часто Lottie имеют отступы, увеличиваем масштаб
+                        width: 140%;
                         height: 140%;
-                        transform: translateY(5px); // Небольшая коррекция позиции
+                        transform: translateY(5px);
                     }
                 }
 
@@ -171,7 +185,7 @@
                     margin-bottom: 2px;
                     display: flex;
                     color: $main-dark;
-                    z-index: 2; // Поверх фона
+                    z-index: 2;
 
                     .icon {
                         width: 50px;
@@ -184,7 +198,7 @@
                     font-weight: 800;
                     color: #232328;
                     font-size: 11px;
-                    z-index: 2; // Поверх фона
+                    z-index: 2;
                 }
 
                 &:active {

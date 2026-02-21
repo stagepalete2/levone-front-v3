@@ -7,31 +7,61 @@ import styles from './Modal.module.scss'
 
 const Modal = ({ onClose }) => {
     const [shake, setShake] = useState(false)
+    // Локальные переопределения состояний тасков (для возможности отмены)
+    const [localOverrides, setLocalOverrides] = useState({})
 
     const { joinCommunity } = useJoinCommunity()
     const { allowMessageFromCommunity } = useAllowMessageFromCommunity()
 
     const group = useGroup((state) => state.group)
     const client = useClient((state) => state.client)
+    const setIsJoinedCommunity = useClient((state) => state.setIsJoinedCommunity)
+    const setIsAllowedMessageFromCommunity = useClient((state) => state.setIsAllowedMessageFromCommunity)
 
-    // Просто объявляем переменную. Она будет заново создаваться с актуальными 
-    // данными при каждом изменении client или group в Zustand.
     const tasks = [
         {
             id: 0,
             title: "Вступить в наше сообщество",
-            // Убедитесь, что используете правильный путь. Если флаг лежит 
-            // прямо в client, оставьте client?.isJoinedCommunity
-            is_complete: client?.is_joined_community || client?.branches?.is_joined_community,
-            onClick: () => joinCommunity({ group_id: parseInt(group?.group_id) }),
+            defaultComplete: client?.is_joined_community || client?.branches?.is_joined_community,
+            onCheck: () => joinCommunity({ group_id: parseInt(group?.group_id) }),
+            onUncheck: () => {
+                // Снимаем локально — VK не позволяет программно покинуть группу
+                setIsJoinedCommunity(false)
+            },
         },
         {
             id: 1,
             title: "Разрешить отправку сообщений",
-            is_complete: client?.is_allowed_message || client?.branches?.is_allowed_message,
-            onClick: () => allowMessageFromCommunity({ group_id: parseInt(group?.group_id) }),
+            defaultComplete: client?.is_allowed_message || client?.branches?.is_allowed_message,
+            onCheck: () => allowMessageFromCommunity({ group_id: parseInt(group?.group_id) }),
+            onUncheck: () => {
+                // Снимаем локально — VK не позволяет программно отозвать разрешение
+                setIsAllowedMessageFromCommunity(false)
+            },
         }
     ]
+
+    // Получаем актуальное состояние таска с учётом локального переопределения
+    const getTaskStatus = (task) => {
+        if (localOverrides[task.id] !== undefined) return localOverrides[task.id]
+        return Boolean(task.defaultComplete)
+    }
+
+    // Обработчик клика по таску
+    const handleTaskClick = (task) => {
+        const isCurrentlyDone = getTaskStatus(task)
+
+        if (isCurrentlyDone) {
+            // Снимаем отметку
+            setLocalOverrides((prev) => ({ ...prev, [task.id]: false }))
+            task.onUncheck?.()
+        } else {
+            // Ставим отметку через оригинальный handler
+            // Сначала ставим локально оптимистично
+            setLocalOverrides((prev) => ({ ...prev, [task.id]: true }))
+            task.onCheck?.()
+        }
+    }
 
     useEffect(() => {
         if (shake) {
@@ -41,7 +71,7 @@ const Modal = ({ onClose }) => {
     }, [shake])
 
     const handleMainButtonClick = () => {
-        const allDone = tasks.every((task) => task.is_complete)
+        const allDone = tasks.every((task) => getTaskStatus(task))
 
         if (allDone) {
             onClose()
@@ -61,16 +91,19 @@ const Modal = ({ onClose }) => {
             </h2>
 
             <div className={styles.taskList}>
-                {tasks.map((task) => (
-                    <div
-                        key={task.id}
-                        className={styles.taskRow}
-                        onClick={!task.is_complete ? task.onClick : undefined}
-                    >
-                        <div className={`${styles.checkbox} ${task.is_complete ? styles.checked : ''}`} />
-                        <span className={styles.taskLabel}>{task.title}</span>
-                    </div>
-                ))}
+                {tasks.map((task) => {
+                    const isDone = getTaskStatus(task)
+                    return (
+                        <div
+                            key={task.id}
+                            className={styles.taskRow}
+                            onClick={() => handleTaskClick(task)}
+                        >
+                            <div className={`${styles.checkbox} ${isDone ? styles.checked : ''}`} />
+                            <span className={styles.taskLabel}>{task.title}</span>
+                        </div>
+                    )
+                })}
             </div>
 
             <button

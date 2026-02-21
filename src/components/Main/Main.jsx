@@ -1,20 +1,19 @@
 import { useActiveVkuiLocation } from '@vkontakte/vk-mini-apps-router'
 import { classNames } from '@vkontakte/vkui'
-import Lottie from 'lottie-react' // 1. Импортируем Lottie
+import Lottie from 'lottie-react'
 
 import { useNavigation } from '../../hooks/useHandleNavigation'
-import { useClient, useLogo } from '../../zustand'
+import { useBranch, useClient, useLogo } from '../../zustand'
 
 import styles from './Main.module.scss'
 
-// 2. Импортируем JSON файлы анимаций
-// Укажите правильные пути к вашим JSON файлам
 import giftLightAnimation from '../../assets/gift_light.json'
 import giftLoopAnimation from '../../assets/gift_loop.json'
 
 const Main = ({ children }) => {
     const client = useClient((state) => state.client)
     const logotype = useLogo((state) => state.logotype)
+    const branch = useBranch((state) => state.branch)
     const { handleNavigation } = useNavigation()
     const { panel: activePanel } = useActiveVkuiLocation()
 
@@ -27,6 +26,9 @@ const Main = ({ children }) => {
                     className={styles.logotype}
                     loading='lazy'
                 />
+                {branch?.name && (
+                    <span className={styles.branchName}>{branch.name}</span>
+                )}
             </header>
 
             <main className={styles.content}>
@@ -52,7 +54,6 @@ const Main = ({ children }) => {
                         className={classNames(styles.nav_link, styles.center_link, activePanel === 'inventory' && styles.active)}
                         onClick={() => handleNavigation('/inventory')}
                     >
-                        {/* 3. Анимация ФОНА кнопки (Gift light) */}
                         <div className={styles.lottie_background}>
                             <Lottie
                                 animationData={giftLightAnimation}
@@ -61,16 +62,14 @@ const Main = ({ children }) => {
                             />
                         </div>
 
-                        {/* 4. Анимация ИКОНКИ (Gift loop) */}
                         <span className={styles.link_icon}>
                             <Lottie
                                 animationData={giftLoopAnimation}
                                 loop={true}
-                                className={styles.icon} // Используем тот же класс размера
+                                className={styles.icon}
                             />
                         </span>
 
-                        {/* Текст поверх анимации */}
                         <span className={styles.link_text}>ПОДАРКИ</span>
                     </button>
                 </div>
