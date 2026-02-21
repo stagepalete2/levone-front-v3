@@ -50,7 +50,7 @@ const Modal = ({ super_prize, prize, onClose }) => {
 					<p className={styles.text}>Выберите Приз</p>
 
 					<div className={styles.detailCard}>
-						<img src={`${import.meta.env.VITE_BACKEND_DOMAIN}${prize.image}`} alt="" />
+						<img src={`${prize.image}`} alt="" />
 						<p className={styles.title}>
 							{prize.name}
 						</p>

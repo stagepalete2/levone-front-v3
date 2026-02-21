@@ -37,7 +37,7 @@ const Modal = ({ super_prize, onClose }) => {
 					<div className={styles.prizes}>
 						{super_prize?.prizes?.map((item, index) => (
 							<div key={item.id} className={styles.prize} onClick={() => handleOpenInfo(item)}>
-								<img src={`${import.meta.env.VITE_BACKEND_DOMAIN}${item.image}`} alt="" />
+								<img src={`${item.image}`} alt="" />
 								<p className={styles.info}>
 									{item.name}
 								</p>
